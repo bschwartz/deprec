@@ -233,6 +233,42 @@ module Deprec2
     mkdir(src_dir, :mode => 0775, :group => group_src, :via => :sudo)
   end
   
+  # Checkout source from a subversion repository
+  #
+  # supply the following required params
+  #   :url => URL of the SVN repo
+  #   :dir => the directory to checkout code into
+  #   
+  # and the following optional params
+  #   :revision => revision number to checkout. e.g. '814' or '{"2002-02-17 15:30"}'
+  #                   * see http://svnbook.red-bean.com/en/1.0/ch03s03.html for details
+  #   :username => the username (if auth is required)
+  #   :password => the password (if auth is required)
+  # 
+  def checkout_src_from_svn(src_package, src_dir)
+    set_package_defaults(src_package)
+    create_src_dir
+    
+    apt.install( {:base => %w(subversion)}, :stable )
+    
+    checkout_cmd = "svn checkout --non-interactive "
+    
+    checkout_cmd << "--revision #{src_package[:revision]} " if src_package[:revision]
+    checkout_cmd << "--username #{src_package[:username]} " if src_package[:username]
+    checkout_cmd << "--password #{src_package[:password]} " if src_package[:password]
+    
+    checkout_cmd << "#{src_package[:url]} #{src_package[:dir]}"
+    
+    sudo <<-EOF
+      bash -c '
+      cd #{src_dir};
+      #{checkout_cmd};
+      chgrp -R #{group} #{src_package[:dir]};
+      chmod -R g+w #{src_package[:dir]};
+      '
+    EOF
+  end
+  
   # download source package if we don't already have it
   def download_src(src_package, src_dir)
     set_package_defaults(src_package)
@@ -247,8 +283,12 @@ module Deprec2
     run "cd #{src_dir} && test -f #{src_package[:filename]} #{md5_clause} || #{sudo} wget --quiet --timestamping #{src_package[:url]}"
   end
 
+  # ** Changed: skip this step if src_package[:unpack] is nil or blank
+  #
   # unpack src and make it writable by the group
   def unpack_src(src_package, src_dir)
+    return unless src_package[:unpack] && src_package[:unpack] != ''
+    
     set_package_defaults(src_package)
     package_dir = File.join(src_dir, src_package[:dir])
     # XXX replace with invoke_command
@@ -264,15 +304,24 @@ module Deprec2
     EOF
   end
   
+  # magically handle bz2 tarballs
   def set_package_defaults(pkg)
-      pkg[:filename] ||= File.basename(pkg[:url])  
-      pkg[:dir] ||= File.basename(pkg[:url], '.tar.gz')  
+    pkg[:filename] ||= File.basename(pkg[:url])
+    pkg[:dir] ||= pkg[:filename].gsub(/\.tar\.(bz2|gz)/, '')
+    
+    if (pkg[:filename] =~ /\.tar\.bz2$/)
+      # it's a bz2
+      pkg[:unpack] ||= "tar jxf #{pkg[:filename]};"
+    else
+      # assume it's gzipped
       pkg[:unpack] ||= "tar zxf #{pkg[:filename]};"
-      pkg[:configure] ||= './configure ;'
-      pkg[:make] ||= 'make;'
-      pkg[:install] ||= 'make install;'
+    end
+    
+    pkg[:configure] ||= './configure ;'
+    pkg[:make] ||= 'make;'
+    pkg[:install] ||= 'make install;'
   end
-
+  
   # install package from source
   def install_from_src(src_package, src_dir)
     package_dir = File.join(src_dir, src_package[:dir])
