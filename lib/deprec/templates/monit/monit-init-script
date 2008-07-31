@@ -91,12 +91,15 @@ case "$1" in
 	$0 stop
 	$0 start
 	;;
+	reload)
+	$0 reload
+	;;
   syntax)
    monit_check_syntax
    ;;
   *)
 	N=/etc/init.d/$NAME
-	echo "Usage: $N {start|stop|restart|force-reload|syntax}" >&2
+	echo "Usage: $N {start|stop|restart|reload|force-reload|syntax}" >&2
 	exit 1
 	;;
 esac
