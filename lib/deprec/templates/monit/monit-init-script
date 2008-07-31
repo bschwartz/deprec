@@ -92,7 +92,9 @@ case "$1" in
 	$0 start
 	;;
 	reload)
-	$0 reload
+	echo -n "Reloading $DESC: "
+	$DAEMON reload
+	echo "done."
 	;;
   syntax)
    monit_check_syntax
