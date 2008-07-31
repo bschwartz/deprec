@@ -69,6 +69,11 @@ Capistrano::Configuration.instance(:must_exist).load do
         end
       end
       
+      desc "Update the system's hostname"
+      task :set_hostname do
+        sudo "hostname #{network_hostname}"
+      end
+      
       desc "Restart network interface"
       task :restart do
         sudo '/etc/init.d/networking restart'
