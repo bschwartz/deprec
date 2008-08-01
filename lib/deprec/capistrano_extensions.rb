@@ -64,7 +64,7 @@ module Deprec2
       sudo "chown #{owner} #{path}" if defined?(owner)
     elsif path 
       # render to local file
-      full_path = File.join('config', app.to_s, path)
+      full_path = File.join(local_config_dir, app.to_s, path)
       path_dir = File.dirname(full_path)
       if File.exists?(full_path)
         if IO.read(full_path) == rendered_template
@@ -154,7 +154,7 @@ module Deprec2
       else
         full_remote_path = file[:path]
       end
-      full_local_path = File.join('config', app, file[:path])
+      full_local_path = File.join(local_config_dir, app, file[:path])
       sudo "test -d #{File.dirname(full_remote_path)} || sudo mkdir -p #{File.dirname(full_remote_path)}"
       #
       # XXX work this in to check for per-host variants of config files

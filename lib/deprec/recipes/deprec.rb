@@ -12,6 +12,9 @@ Capistrano::Configuration.instance(:must_exist).load do
   # Deprec checks here for local versions of config templates before it's own
   set :local_template_dir, File.join('config','templates')
   
+  # Deprec renders config files here
+  set :local_config_dir, 'config'
+  
   # The following two Constants contain details of the configuration 
   # files used by each service. They're used when generating config
   # files from templates and when configs files are pushed out to servers.
