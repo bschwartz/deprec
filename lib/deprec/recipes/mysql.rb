@@ -1,9 +1,51 @@
+module MySQLMethods
+  def execute(sql, user)
+    user = 'root'
+    run "mysql --user=#{user} -p --execute=\"#{sql}\"" do |channel, stream, data|
+      handle_mysql_password(user, channel, stream, data)
+    end
+  end
+
+  def change_password(user, new_password)
+    run "mysqladmin -u#{user} -p password #{new_password}" do |channel, stream, data|
+      handle_mysql_password(user, channel, stream, data)
+    end
+  end
+
+  def create_database(db_name, user = nil, pass = nil)
+    sql = ["CREATE DATABASE IF NOT EXISTS #{db_name};"]
+    sql << "GRANT ALL PRIVILEGES ON #{user}.* TO #{user}@localhost" if user
+    sql << " IDENTIFIED BY '#{pass}'" if pass
+    sql << ';'
+    sql << 'flush privileges;'
+    mysql.execute sql, mysql_admin
+  end
+ 
+  private
+  def handle_mysql_password(user, channel, stream, data)
+    logger.info data, "[database on #{channel[:host]} asked for password]"
+    if data =~ /^Enter password:/
+      pass = Capistrano::CLI.password_prompt "Enter database password for '#{user}':"
+      channel.send_data "#{pass}\n"
+    end
+  end
+end
+
+Capistrano.plugin :mysql_helper, MySQLMethods
+
 # Copyright 2006-2008 by Mike Bailey. All rights reserved.
 Capistrano::Configuration.instance(:must_exist).load do 
   namespace :deprec do
     namespace :mysql do
       
       # Installation
+      desc "Install, configure, and start mysql"
+      task :install_configure_start, :roles => :db do
+        install
+        config_gen
+        config
+        start
+      end
       
       desc "Install mysql"
       task :install, :roles => :db do
@@ -80,6 +122,13 @@ Capistrano::Configuration.instance(:must_exist).load do
       end
       
       task :restore, :roles => :db do
+      end
+      
+            
+      # A D M I N / S E T U P
+      desc "Change the root MySQL password"
+      task :change_root_password, :roles => :db, :only => { :primary => true } do
+        mysql_helper.change_password('root', Capistrano::CLI.ui.ask("Enter new password for root"))
       end
             
     end
