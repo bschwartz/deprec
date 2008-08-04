@@ -17,7 +17,7 @@ Capistrano::Configuration.instance(:must_exist).load do
       }
       
       desc "install Sphinx Search Engine"
-      task :install do
+      task :install, :roles => :search do
         deprec2.download_src(SRC_PACKAGES[:sphinx], src_dir)
         deprec2.install_from_src(SRC_PACKAGES[:sphinx], src_dir)
       end
@@ -51,31 +51,42 @@ Capistrano::Configuration.instance(:must_exist).load do
       end
 
       desc "Push sphinx config files to server"
-      task :config, :roles => :sphinx do
+      task :config, :roles => :search do
         config_project
       end
       
       desc "Push sphinx config files to server"
-      task :config_project, :roles => :sphinx do
+      task :config_project, :roles => :search do
         deprec2.push_configs(:sphinx, PROJECT_CONFIG_FILES[:sphinx])
         symlink_monit_config
+        
+        configure_ultrasphinx
       end
       
-      task :symlink_monit_config, :roles => :sphinx do
+      task :symlink_monit_config, :roles => :search do
         sudo "ln -sf #{deploy_to}/sphinx/monit.conf #{monit_confd_dir}/sphinx_#{application}.conf"
       end
 
 
       # Control
+      desc "Configure ultrasphinx"
+      task :configure_ultrasphinx, :roles => :search do
+        run("cd #{deploy_to}/#{current_dir}; rake RAILS_ENV=#{rails_env} ultrasphinx:configure")
+        conf_dir = "config/ultrasphinx"
+        conf_path = "#{conf_dir}/#{rails_env}.conf"
+        
+        deprec2.mkdir "#{deploy_to}/#{shared_dir}/#{conf_dir}"
+        run("mv #{deploy_to}/#{current_dir}/#{conf_path} #{deploy_to}/#{shared_dir}/#{conf_path}")
+      end
       
       desc "Restart the sphinx searchd daemon"
-      task :restart, :roles => :app do
-        run("cd #{deploy_to}/current; /usr/bin/rake us:start")  ### start or restart?  SUDO ? ###
+      task :restart, :roles => :search do
+        run("cd #{deploy_to}/current; rake RAILS_ENV=#{rails_env} us:start")  ### start or restart?  SUDO ? ###
       end
 
       desc "Regenerate / Rotate the search index."
-      task :reindex, :roles => :app do
-        run("cd #{deploy_to}/current; /usr/bin/rake us:in")  ### SUDO ? ###
+      task :reindex, :roles => :search do
+        run("cd #{deploy_to}/current; rake RAILS_ENV=#{rails_env} us:in")  ### SUDO ? ###
       end
 
     end 
