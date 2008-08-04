@@ -3,9 +3,18 @@ Capistrano::Configuration.instance(:must_exist).load do
   # XXX not complete
   namespace :deprec do
     namespace :postfix do
+
+      # Installation
+      desc "Install, configure, and start Postfix"
+      task :install_configure_start, :roles => :mail do
+        install
+        config_gen
+        config
+        start
+      end
       
       desc "Install Postfix"
-      task :install, :roles => :web do
+      task :install, :roles => :mail do
         install_deps
       end
       
