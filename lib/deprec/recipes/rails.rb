@@ -185,7 +185,7 @@ Capistrano::Configuration.instance(:must_exist).load do
             if path != '.'
               deprec2.mkdir("#{current_path}/#{path}")
             end
-            run "ln -nfs #{shared_path}/#{dir} #{current_path}/#{dir}" 
+            run "ln -nfs #{shared_path}/#{dir} #{release_path}/#{dir}"
           end
         end
       end
