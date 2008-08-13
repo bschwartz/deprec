@@ -22,7 +22,7 @@ Capistrano::Configuration.instance(:must_exist).load do
     top.deprec.rails.set_perms_on_shared_and_releases
   end
 
-  after 'deploy:symlink', :roles => :app do
+  after 'deploy:update_code', :roles => :app do
     top.deprec.rails.symlink_shared_dirs
     top.deprec.rails.symlink_database_yml unless database_yml_in_scm
     top.deprec.mongrel.set_perms_for_mongrel_dirs
