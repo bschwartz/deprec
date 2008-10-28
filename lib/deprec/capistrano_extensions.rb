@@ -269,6 +269,30 @@ module Deprec2
     EOF
   end
   
+  # Checkout (clone) source from a git repository
+  #
+  # supply the following required params
+  #   :url => URL of the git repo
+  #   :dir => the directory to checkout code into
+  # 
+  def checkout_src_from_git(src_package, src_dir)
+    set_package_defaults(src_package)
+
+    apt.install( {:base => %w(git)}, :stable )
+    
+    clone_cmd = "git clone "
+    clone_cmd << "#{src_package[:url]} #{src_package[:dir]}"
+    
+    sudo <<-EOF
+      bash -c '
+      cd #{src_dir};
+      #{clone_cmd};
+      chgrp -R #{group} #{src_package[:dir]};
+      chmod -R g+w #{src_package[:dir]};
+      '
+    EOF
+  end
+  
   # download source package if we don't already have it
   def download_src(src_package, src_dir)
     set_package_defaults(src_package)
@@ -280,7 +304,7 @@ module Deprec2
     end
     apt.install( {:base => %w(wget)}, :stable )
     # XXX replace with invoke_command
-    run "cd #{src_dir} && test -f #{src_package[:filename]} #{md5_clause} || #{sudo} wget --quiet --timestamping #{src_package[:url]}"
+    run "cd #{src_dir} && test -f #{src_package[:filename]} #{md5_clause} || #{sudo} wget --quiet --timestamping #{src_package[:url]} -O #{src_package[:filename]}"
   end
 
   # ** Changed: skip this step if src_package[:unpack] is nil or blank
