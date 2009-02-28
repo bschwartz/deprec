@@ -49,6 +49,7 @@ Capistrano::Configuration.instance(:must_exist).load do
         gem2.install 'sqlite3-ruby'
         gem2.install 'mysql'
         gem2.install 'rails'
+        gem2.install 'rake'
         gem2.install 'rspec'
       end
       
@@ -60,17 +61,19 @@ Capistrano::Configuration.instance(:must_exist).load do
         # Ruby everywhere!
         top.deprec.ruby.install      
         top.deprec.rubygems.install
+
+        # SVN and Git for all!
+        top.deprec.svn.install
+        top.deprec.git.install
         
         deprec2.for_roles('web') do
           top.deprec.nginx.install        
         end
         
         deprec2.for_roles('app') do
-          top.deprec.svn.install
-          top.deprec.git.install     
+          top.deprec.rails.install
           top.deprec.mongrel.install
           top.deprec.monit.install
-          top.deprec.rails.install
         end
         
         deprec2.for_roles('web,app') do
