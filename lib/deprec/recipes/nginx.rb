@@ -17,7 +17,7 @@ Capistrano::Configuration.instance(:must_exist).load do
       }
 
       desc "Install nginx"
-      task :install do
+      task :install, :roles => :web do
         install_deps
         deprec2.download_src(SRC_PACKAGES[:nginx], src_dir)
         deprec2.install_from_src(SRC_PACKAGES[:nginx], src_dir)
