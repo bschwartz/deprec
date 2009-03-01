@@ -5,6 +5,7 @@ Capistrano::Configuration.instance(:must_exist).load do
   set :app_symlinks, nil
   set :rails_env, 'production'
   set :gems_for_project, nil # Array of gems to be installed for app
+  set :shared_files, nil # Array of files that should be symlinked to shared
   set :shared_dirs, nil # Array of directories that should be created under shared/
                         # and linked to in the project
 
@@ -24,6 +25,7 @@ Capistrano::Configuration.instance(:must_exist).load do
 
   after 'deploy:update_code', :roles => :app do
     top.deprec.rails.symlink_shared_dirs
+    top.deprec.rails.symlink_shared_files
     top.deprec.rails.symlink_database_yml unless database_yml_in_scm
     top.deprec.mongrel.set_perms_for_mongrel_dirs
   end
@@ -193,12 +195,12 @@ Capistrano::Configuration.instance(:must_exist).load do
         end
       end
       
-      # desc "Symlink shared files."
-      # task :symlink_shared_files, :roles => [:app, :web] do
-      #   if shared_files
-      #     shared_files.each { |file| run "ln -nfs #{shared_path}/#{file} #{current_path}/#{file}" }
-      #   end
-      # end
+      desc "Symlink shared files."
+      task :symlink_shared_files, :roles => [:app, :web] do
+        if shared_files
+          shared_files.each { |file| run "ln -nfs #{shared_path}/#{file} #{current_path}/#{file}" }
+        end
+      end
 
       # database.yml stuff
       #
