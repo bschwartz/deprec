@@ -198,7 +198,7 @@ Capistrano::Configuration.instance(:must_exist).load do
       desc "Symlink shared files."
       task :symlink_shared_files, :roles => [:app, :web] do
         if shared_files
-          shared_files.each { |file| run "ln -nfs #{shared_path}/#{file} #{current_path}/#{file}" }
+          shared_files.each { |file| run "ln -nfs #{shared_path}/#{file} #{release_path}/#{file}" }
         end
       end
 
