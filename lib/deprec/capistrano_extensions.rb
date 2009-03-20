@@ -299,7 +299,7 @@ module Deprec2
     create_src_dir
     # check if file exists and if we have an MD5 hash or bytecount to compare 
     # against if so, compare and decide if we need to download again
-    if defined?(src_package[:md5sum])
+    if src_package[:md5sum]
       md5_clause = " && echo '#{src_package[:md5sum]}' | md5sum -c - "
     end
     apt.install( {:base => %w(wget)}, :stable )
